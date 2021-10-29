@@ -22,16 +22,19 @@ function bactXpat {
 ##ipython cannot access other permissioned directories
 #for bact in $bacteria
 #do
-    bactdir=$HOME'/data/hot_bact/*/*' #Staphylococcus_aureus*' #Escherichia_coli_O157*'
-    bacteria=$(ls $bactdir/*)
+    # bactdir=$HOME'/data/hot_bact/*/*' #Staphylococcus_aureus*' #Escherichia_coli_O157*'
+    # bacteria=$(ls $bactdir/*)
 
-    outimg=$HOME'/img/heat/'
-    outdat=$HOME'/data/meta/'
+    outimg=$HOME'/img/heat_unfilt/'
+    outdat=$HOME'/data/meta_unfilt/'
     tmpdir=$HOME'/data/tmp/'
-    sampledir='../../groups/cgsd/gordonq/LauG_Metagenomics_CPOS-200710-CJX-3455a/filtered/'
+    # sampledir='../../groups/cgsd/gordonq/LauG_Metagenomics_CPOS-200710-CJX-3455a/filtered/'
+    sampledir='../..//groups/cgsd/hbyao/LauG_Metagenomics_CPOS-191021-DMS-326a/primary_seq'
     samples=$(ls $sampledir*)
     n=0
     bact=$1
+    mkdir $outimg
+    mkdir $outdat
     #pat=$2
     # printf $bact" "$pat" \n"
     if [ $((n%2)) -eq 0 ];then
@@ -53,10 +56,10 @@ function bactXpat {
     do
     # sample=$2
 
-        # if test -f $outdat$bac"_"$pat".bedgraph";
-        # then
-        #   continue
-        # fi
+        if [ -e $outdat$bac"_"$pat".bedgraph"];
+        then
+          continue
+        fi
 
         pat=$(eval "basename "$sample" | cut -d _ -f1")
         printf "crossing "$bac" with "$pat"\n">>progress.txt
@@ -65,21 +68,14 @@ function bactXpat {
         eval "samtools view -bS "$tmpdir$bac"_bowtie.sam > "$tmpdir$bac"_bowtie.bam"
         eval "samtools sort "$tmpdir$bac"_bowtie.bam -o "$tmpdir$bac"_"$pat"_bowtie.sorted.bam" ##sort and convert
         eval "samtools index "$tmpdir$bac"_"$pat"_bowtie.sorted.bam"
-        eval "bamCoverage -b "$tmpdir$bac"_"$pat"_bowtie.sorted.bam -of bedgraph -o "$outdat$bac"_"$pat".bedgraph"
-        eval "bamCoverage -b "$tmpdir$bac"_"$pat"_bowtie.sorted.bam -o "$outdat$bac"_"$pat".bigwig"
+        eval "bamCoverage -b "$tmpdir$bac"_"$pat"_bowtie.sorted.bam -bs 1 -of bedgraph -o "$outdat$bac"_"$pat".bedgraph"
+        eval "bamCoverage -b "$tmpdir$bac"_"$pat"_bowtie.sorted.bam -bs 1 -o "$outdat$bac"_"$pat".bigwig"
         # eval "cut -f2,3,4 "$pat".bedgraph > "$bac"_"$pat".bg"
-        eval "computeMatrix scale-regions -S "$outdat$bac"_"$pat".bigwig -R "$outdat$bac"_"$pat".bedgraph -a 1000 -b 1000 -o "$tmpdir$bac"_"$pat"matrix.mat.gz" ## -R data/tmp_oric.bed
-        # printf "heatmapping "$baA" "$baB" with "$pat"\n" >> progress.txt
-        eval "plotHeatmap -m "$tmpdir$bac"_"$pat"matrix.mat.gz --kmeans 4 -o "$outimg$bac"_"$pat".png"
+        # eval "computeMatrix scale-regions -S "$outdat$bac"_"$pat".bigwig -R "$outdat$bac"_"$pat".bedgraph -a 1000 -b 1000 -o "$tmpdir$bac"_"$pat"matrix.mat.gz" ## -R data/tmp_oric.bed
 
-        # mv *.bigwig *.bedgraph data/meta
-        # mv *.png img
-        # rm "$tmpdir$bac"_bowtie.sam "$tmpdir"matrix.mat.gz "$tmpdir$bac"_bowtie.bam "$tmpdir$bac"_.bt2 "$tmpdir$bac"_bowtie.bam.bai
-        # rm *.sam *.bam *.bt2 .*.bai *.bg
-#
+        # eval "plotHeatmap -m "$tmpdir$bac"_"$pat"matrix.mat.gz --kmeans 4 -o "$outimg$bac"_"$pat".png"
 
-#       rm *.e* *.o*
-      # fi
+
     done
     ##set -- arrVarA
     ##eval "computeMatrix scale-regions -S $arrVarA -R $arrVarB -a 1000 -b 1000 -o matrix.mat.gz"
