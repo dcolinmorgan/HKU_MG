@@ -25,12 +25,12 @@ function bactXpat {
     # bactdir=$HOME'/data/hot_bact/*/*' #Staphylococcus_aureus*' #Escherichia_coli_O157*'
     # bacteria=$(ls $bactdir/*)
 
-    outimg=$HOME'/img/heat_unfilt/'
-    outdat=$HOME'/data/meta_unfilt/'
+    outimg=$HOME'/img/heat/'
+    outdat=$HOME'/data/meta/'
     tmpdir=$HOME'/data/tmp/'
-    # sampledir='../../groups/cgsd/gordonq/LauG_Metagenomics_CPOS-200710-CJX-3455a/filtered/'
-    sampledir='../..//groups/cgsd/hbyao/LauG_Metagenomics_CPOS-191021-DMS-326a/primary_seq'
-    samples=$(ls $sampledir*)
+    sampledirA='../../groups/cgsd/gordonq/LauG_Metagenomics_CPOS-200710-CJX-3455a/filtered/'
+    sampledirB='../../groups/cgsd/hbyao/LauG_Metagenomics_CPOS-191021-DMS-326a/primary_seq'
+    samples=$(ls $sampledirA*;ls $sampledirB*;)
     n=0
     bact=$1
     mkdir $outimg
@@ -68,8 +68,8 @@ function bactXpat {
         eval "samtools view -bS "$tmpdir$bac"_bowtie.sam > "$tmpdir$bac"_bowtie.bam"
         eval "samtools sort "$tmpdir$bac"_bowtie.bam -o "$tmpdir$bac"_"$pat"_bowtie.sorted.bam" ##sort and convert
         eval "samtools index "$tmpdir$bac"_"$pat"_bowtie.sorted.bam"
-        eval "bamCoverage -b "$tmpdir$bac"_"$pat"_bowtie.sorted.bam -bs 1 -of bedgraph -o "$outdat$bac"_"$pat".bedgraph"
-        eval "bamCoverage -b "$tmpdir$bac"_"$pat"_bowtie.sorted.bam -bs 1 -o "$outdat$bac"_"$pat".bigwig"
+        eval "bamCoverage -b "$tmpdir$bac"_"$pat"_bowtie.sorted.bam -bs 1 -e -of bedgraph -o "$outdat$bac"_"$pat".bedgraph"
+        eval "bamCoverage -b "$tmpdir$bac"_"$pat"_bowtie.sorted.bam -bs 1 -e -o "$outdat$bac"_"$pat".bigwig"
         # eval "cut -f2,3,4 "$pat".bedgraph > "$bac"_"$pat".bg"
         # eval "computeMatrix scale-regions -S "$outdat$bac"_"$pat".bigwig -R "$outdat$bac"_"$pat".bedgraph -a 1000 -b 1000 -o "$tmpdir$bac"_"$pat"matrix.mat.gz" ## -R data/tmp_oric.bed
 
@@ -86,7 +86,16 @@ function bactXpat {
 
 export -f bactXpat
 
-parallel bactXpat ::: $HOME/data/hot_bact/*/* #../../groups/cgsd/gordonq/LauG_Metagenomics_CPOS-200710-CJX-3455a/filtered/*
+parallel bactXpat ::: $HOME/data/*bact/*/* #../../groups/cgsd/gordonq/LauG_Metagenomics_CPOS-200710-CJX-3455a/filtered/*
+
+source activate miniconda3; source activate mypy3
+chmod +x run/oric/bactXpat.py
+
+# if [ $buffer != 0 ];then
+#   python netZooPy/netZooPy/milipeed/benchmark/run_predScore.py -i $bench/red -o $bench/red/test/
+  # find "data/MotifPipeline/camb_motif_"$buffer"_QCdelta/" -maxdepth 1 -type f -exec rm -rf {} \;
+# else
+python run/oric/bactXpat.py # -i $bench -o $bench/test/
 
 ##eval "computeMatrix scale-regions -S NC_016776R0414-THY.bigwig NC_016776R0415-CWH.bigwig NC_016776R0416-LMY.bigwig NC_016776R0404-CPL.bigwig -R NC_016776R0414-THY.bedgraph NC_016776R0415-CWH.bedgraph NC_016776R0416-LMY.bedgraph NC_016776R0404-CPL.bedgraph -a 1000 -b 1000 -o matrix.mat.gz"
 
