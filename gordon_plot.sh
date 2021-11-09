@@ -21,14 +21,24 @@ cd /groups/cgsd/gordonq/TSS_depth/nanopore_data/
 
 
 function gordon_plot {
-taxid=$1
+tax_id=$1
 # taxid=cat tax
-sample=$2
+pat_id=$2
+mkdir -p $HOME/$tax_id/beds
+mkdir -p $HOME/$tax_id/matrices
+mkdir -p $HOME/$tax_id/heatmaps
 # sample=cat $samples
 # for sample in `cat $idlist`
 # do
-python $HOME/run/oric/gordon_plot.py $taxid $sample
+# python $HOME/run/oric/gordon_plot.py $taxid $sample
+bamCoverage --bam $tax_id/bams/$pat_id.sorted.bam -p 48 -o $HOME/$tax_id/beds/$pat_id.bigwig --binSize 1
 
+bamCoverage --bam $tax_id/bams/$pat_id.sorted.bam -p 48 -of bedgraph -o $HOME/$tax_id/beds/$pat_id.bedgraph --binSize 1
+
+
+computeMatrix scale-regions -S $HOME/$tax_id/beds/$pat_id.bigwig -R $HOME/$tax_id/beds/$pat_id.bedgraph -a 1000 -b 1000 -o $HOME/$tax_id/matrices/$pat_id.matrixC.mat.gz
+
+plotHeatmap -m $HOME/$tax_id/matrices/$pat_id.matrixC.mat.gz --kmeans 4 -o $HOME/$tax_id/heatmaps/$pat_id.png
 
 
 # done
@@ -36,4 +46,6 @@ python $HOME/run/oric/gordon_plot.py $taxid $sample
 
 export -f gordon_plot
 
-parallel gordon_plot ::: 853 $(cat idlist_SRR)
+parallel gordon_plot ::: $(cat $HOME/idlist) ::: $(cat idlist_SRR)
+
+
