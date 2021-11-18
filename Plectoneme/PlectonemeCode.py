@@ -2,7 +2,7 @@
 # import matplotlib.pyplot as plt
 import numpy as np
 import os,sys
-sys.path.insert(1, './run/')
+sys.path.insert(1, './run/oric/Plectoneme/')
 # from scipy.stats import linregress
 import glob
 from tqdm import tqdm
