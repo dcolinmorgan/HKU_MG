@@ -64,7 +64,7 @@ function bactXpat {
         pat=$(eval "basename "$sample" | cut -d _ -f1")
         printf "crossing "$bac" with "$pat"\n">>progress.txt
 
-        eval "bowtie2 -x "$tmpdir$bac".fna -1 "$sampledir$pat"_clean_1.fastq -2 "$sampledir$pat"_clean_2.fastq -S "$tmpdir$bac"_bowtie.sam" ##align
+        eval "bowtie2 -x "$tmpdir$bac".fna -1 "$sampledir$pat"_clean_1.fastq -2 "$sampledir$pat"_clean_2.fastq -S "$tmpdir$bac"_bowtie.sam" ##align ## check bottom of FNA files for gap in coverage -->
         eval "samtools view -bS "$tmpdir$bac"_bowtie.sam > "$tmpdir$bac"_bowtie.bam"
         eval "samtools sort "$tmpdir$bac"_bowtie.bam -o "$tmpdir$bac"_"$pat"_bowtie.sorted.bam" ##sort and convert
         eval "samtools index "$tmpdir$bac"_"$pat"_bowtie.sorted.bam"
