@@ -1,6 +1,5 @@
 
 WAVES/D	CurvatureSequence	CurveMag	CurvePhase	EndEffects	HalfCurveMag	HalfCurvePhase	Sequence_angle_energy	Sequence_angle_exp	Sequence_angle_exp_smth	Sequence_phase
-BEGIN
 	0	0	0	0	0	0	inf	0	0.2571251029573554	0
 	0	0	0	0	0	0	inf	0	0.2597887080447849	27.689
 	0	0	0	0	0	0	inf	0	0.2624635125216046	67.673
@@ -1011,4 +1010,3 @@ BEGIN
 	0	0	0	0	0	0	inf	0	0.2624657745762004	34333.9279999999
 	0	0	0	0	0	0	inf	0	0.2597909489398153	34363.7159999999
 	0	0	0	0	0	0	inf	0	0.2571273227408434	34398.1019999999
-END

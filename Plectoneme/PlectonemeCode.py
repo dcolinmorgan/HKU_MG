@@ -4,7 +4,8 @@ sys.path.insert(1, './run/oric/Plectoneme/')
 import glob
 from tqdm import tqdm
 import pandas as pd
-from scipy import signal
+# from scipy import signal
+import biosppy
 from savitzky_golay import savitzky_golay
 from load_measures import load_measures
 
@@ -41,23 +42,24 @@ def PlectonemeCode(Swave):
     
         index = 4*Letter1+Letter2			#The index defines the current dinucleotide, AA=0, AC=1,...TT=15
         Sequence_phase[ii]=Sequence_phase[ii-1]+Twave[index]					#This is used to measure how far around the DNA the major groove has rotated relative to the first base pair
-        BendRot=np.array([[np.cos(Sequence_phase[ii]), np.sin(Sequence_phase[ii])],[-np.sin(Sequence_phase[ii]),np.cos(Sequence_phase[ii])]]) #Rotation matrix
+        BendRot=np.transpose(np.array([[np.cos(Sequence_phase[ii]), np.sin(Sequence_phase[ii])],[-np.sin(Sequence_phase[ii]),np.cos(Sequence_phase[ii])]])) #Rotation matrix
         Covariance=np.array([[CwaveRR[index], 0],[0,CwaveTT[index]]])	#The covariance matrix for the current basepair, expressed in the coordinates of the current basepair
         CovRot = BendRot@Covariance@np.transpose(BendRot) #Rotating the covariance matrix so it will line up with its neighbors
         BasepairCovariance[ii]=CovRot#np.sum(CovRot,axis=1)					#Rotated covariance matrix at position is recorded
     
         omDiv2_n=Twave[index]/2
-        Romega_n=np.array([[np.cos(omDiv2_n),np.sin(omDiv2_n),0,0],[-np.sin(omDiv2_n),np.cos(omDiv2_n),0,0],[0,0,1,0],[0,0,0,1]])
+        Romega_n=np.transpose(np.array([[np.cos(omDiv2_n),np.sin(omDiv2_n),0,0],[-np.sin(omDiv2_n),np.cos(omDiv2_n),0,0],[0,0,1,0],[0,0,0,1]]))
         alpha_n=Wwave[index]
         beta_n=Dwave[index]-np.pi/2
     
-        Rzplus=np.array([[np.cos(beta_n),np.sin(beta_n),0,0],[-np.sin(beta_n),np.cos(beta_n),0,0],[0,0,1,0],[0,0,0,1]])
-        Rx=np.array([[1,0,0,0],[0,np.cos(-alpha_n),np.sin(-alpha_n),0],[0,-np.sin(-alpha_n),np.cos(-alpha_n),0],[0,0,0,1]])
-        Rzminus=np.array([[np.cos(-beta_n),np.sin(-beta_n),0,0],[-np.sin(-beta_n),np.cos(-beta_n),0,0],[0,0,1,0],[0,0,0,1]])
+        Rzplus=np.transpose(np.array([[np.cos(beta_n),np.sin(beta_n),0,0],[-np.sin(beta_n),np.cos(beta_n),0,0],[0,0,1,0],[0,0,0,1]]))
+        Rx=np.transpose(np.array([[1,0,0,0],[0,np.cos(-alpha_n),np.sin(-alpha_n),0],[0,-np.sin(-alpha_n),np.cos(-alpha_n),0],[0,0,0,1]]))
+        Rzminus=np.transpose(np.array([[np.cos(-beta_n),np.sin(-beta_n),0,0],[-np.sin(-beta_n),np.cos(-beta_n),0,0],[0,0,1,0],[0,0,0,1]]))
     
         Q_n = Rzminus@Rx@Rzplus
         Minverse_n = np.linalg.inv(T_n@Romega_n@Q_n@Romega_n@T_n)
         Minverse_new =  Minverse_n@Minverse_tot
+        
         Minverse_tot=Minverse_new #Updating the total tranformation matrix
         CurrentPos = np.transpose(Minverse_tot)@StartPos  #Calculate the coordinates of the current basepair
         CurrentPosMG =  np.transpose(Minverse_tot)@StartPosMG
@@ -80,14 +82,17 @@ def PlectonemeCode(Swave):
     for CurveWindow in tqdm(np.arange(40,119,8)):# (CurveWindow=40; CurveWindow<120; CurveWindow+=8)
         # LocalCovariance[:,0]=savitzky_golay(BasepairCovariance[:,0],CurveWindow+1,2)		#Find covariance matrix over the curvature window
         # LocalCovariance[:,1]=savitzky_golay(BasepairCovariance[:,1],CurveWindow+1,2)
-        # LocalCovariance=smooth(BasepairCovariance,65,'bartlett')
+        LocalCovariance[:,0,0]=biosppy.signals.tools.smoother(signal=BasepairCovariance[:,0,0], kernel='boxcar', size=CurveWindow)[0]
+        LocalCovariance[:,1,1]=biosppy.signals.tools.smoother(signal=BasepairCovariance[:,1,1], kernel='boxcar', size=CurveWindow)[0]
+        LocalCovariance[:,1,0]=biosppy.signals.tools.smoother(signal=BasepairCovariance[:,1,0], kernel='boxcar', size=CurveWindow)[0]
+        LocalCovariance[:,0,1]=biosppy.signals.tools.smoother(signal=BasepairCovariance[:,0,1], kernel='boxcar', size=CurveWindow)[0]
         # kernel_size=len(BasepairCovariance[:,0])
         # LocalCovariance[:,0]=signal.convolve(BasepairCovariance[:,0],np.ones(kernel_size)/kernel_size,mode='same')
         # LocalCovariance[:,1]=signal.convolve(BasepairCovariance[:,1],np.ones(kernel_size)/kernel_size,mode='same')
         w=2
         s=CurveWindow+1
         t = (((w - 1)/2)-0.5)/s
-        LocalCovariance=BasepairCovariance#gaussian_filter(BasepairCovariance,sigma=s, truncate=t)
+        LocalCovariance=gaussian_filter(BasepairCovariance,sigma=s, truncate=t)
     
         TanVector, NormVector,CurveVector=(np.zeros([SeqLength,3]) for i in range(3))
         CurveMag, CurvePhase, HalfCurveMag, HalfCurvePhase=(np.zeros([SeqLength]) for i in range(4))
@@ -109,21 +114,22 @@ def PlectonemeCode(Swave):
             CurveVector[ii]=CurrentCurve  #curvature vector is recorded at this position
             CurveMag[ii]=np.arcsin(np.sqrt(np.dot(CurrentCurve, CurrentCurve)))
     
-            CurrentCurve=CurrentCurve/CurveMag[ii]	#normalize the curvature vector to track direction
+            CurrentCurve=np.divide(CurrentCurve,CurveMag[ii])	#normalize the curvature vector to track direction
             #Calculates the phase angle of the curvature relative to major groove at start of DNA
             CurrentTan=TanVector[ii]
             CurrentNorm=NormVector[ii]
+            
             CosCurve=np.dot(CurrentCurve, CurrentNorm)
-            CurveCross=np.cross(CurrentNorm,CurrentCurve)
+            CurveCross=np.cross(CurrentCurve,CurrentNorm)
             SinCurve=np.dot(CurveCross, CurrentTan)
             CurvePhase[ii]=np.mod(np.arctan2(SinCurve,CosCurve)+Sequence_phase[ii],2*np.pi)
         EnergyOffset=25-CurveWindow*0.334*3/4.06   #adds energy penalty from pulling in DNA ends against a force
     
         for ii in np.arange(BindLength,SeqLength-BindLength-1):
             Covariance=LocalCovariance[ii]
-            BendRot=[[np.cos(CurvePhase[ii]), np.sin(CurvePhase[ii])],[-np.sin(CurvePhase[ii]),np.cos(CurvePhase[ii])]]
+            BendRot=np.transpose(np.array([[np.cos(CurvePhase[ii]), np.sin(CurvePhase[ii])],[-np.sin(CurvePhase[ii]),np.cos(CurvePhase[ii])]]))
             CovRot = ( BendRot @ Covariance @ np.transpose(BendRot))		#local covariance matrix alligned to major groove
-            BendRot=[[np.cos(np.pi/4), np.sin(np.pi/4)],[-np.sin(np.pi/4),np.cos(np.pi/4)]]
+            BendRot=np.transpose(np.array([[np.cos(np.pi/4), np.sin(np.pi/4)],[-np.sin(np.pi/4),np.cos(np.pi/4)]]))
             CovRot45 = ( BendRot @ Covariance @ np.transpose(BendRot))		#local covariance matrix alligned 45� to major groove
             Cnorm=CurveMag[ii]/(2*np.pi*CircFrac)
             # Cnorm=0				#Uncomment to compare to straight DNA with variable stiffness
@@ -147,13 +153,14 @@ def PlectonemeCode(Swave):
     Sequence_angle_exp=Sequence_angle_exp*EndEffects
     
     Sequence_angle_exp_smth=np.copy(Sequence_angle_exp)
-    np.nan_to_num(Sequence_angle_exp_smth, copy=True, nan=0.0, posinf=None, neginf=None)
-    kernel_size=len(Sequence_angle_exp_smth)
-    for i in tqdm(np.arange(64)):
+    # np.nan_to_num(Sequence_angle_exp_smth, copy=True, nan=0.0, posinf=None, neginf=None)
+    # kernel_size=len(Sequence_angle_exp_smth)
+    for i in tqdm(np.arange(300)):
         # Sequence_angle_exp_smth=savitzky_golay(Sequence_angle_exp_smth,65,2)		#Find covariance matrix over the curvature window
         # Sequence_angle_exp_smth=signal.convolve(Sequence_angle_exp_smth,np.ones(kernel_size)/kernel_size,mode='same')
-        w=2
-        s=300
-        t = (((w - 1)/2)-0.5)/s
-        Sequence_angle_exp_smth=gaussian_filter(Sequence_angle_exp_smth,sigma=s, truncate=t)
-    return Sequence_angle_exp_smth, Sequence_angle_exp,DNApath
+        # w=2
+        # s=300
+        # t = (((w - 1)/2)-0.5)/s
+        # Sequence_angle_exp_smth=gaussian_filter(Sequence_angle_exp_smth,sigma=s, truncate=t)
+        Sequence_angle_exp_smth=biosppy.signals.tools.smoother(signal=Sequence_angle_exp_smth, kernel='boxcar', size=64)[0]
+    return Sequence_angle_exp_smth, Sequence_angle_exp,CurvePhase
