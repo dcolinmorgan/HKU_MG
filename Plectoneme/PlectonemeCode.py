@@ -29,7 +29,7 @@ def PlectonemeCode(Swave):
     
     #This loop finds the 3D path of the relaxed DNA
     Letter1=0
-    for ii in tqdm(np.arange(SeqLength-1)):
+    for ii in (np.arange(SeqLength-1)):
         ii=ii+1
         if Swave[ii]=='A':
             Letter2=0
@@ -68,7 +68,7 @@ def PlectonemeCode(Swave):
         DNApathMajorGroove[ii]=CurrentPosMG
         Letter1=Letter2
     
-    print("path calculated")
+    # print("path calculated")
     
     #Make the curvature calculation
     CircFrac=0.667	#We assume the plectoneme tip makes a 240� arc before joining the bulk plectoneme region
@@ -79,20 +79,20 @@ def PlectonemeCode(Swave):
     
     
     
-    for CurveWindow in tqdm(np.arange(40,119,8)):# (CurveWindow=40; CurveWindow<120; CurveWindow+=8)
+    for CurveWindow in (np.arange(40,119,8)):# (CurveWindow=40; CurveWindow<120; CurveWindow+=8)
         # LocalCovariance[:,0]=savitzky_golay(BasepairCovariance[:,0],CurveWindow+1,2)		#Find covariance matrix over the curvature window
         # LocalCovariance[:,1]=savitzky_golay(BasepairCovariance[:,1],CurveWindow+1,2)
-        LocalCovariance[:,0,0]=biosppy.signals.tools.smoother(signal=BasepairCovariance[:,0,0], kernel='boxcar', size=CurveWindow)[0]
-        LocalCovariance[:,1,1]=biosppy.signals.tools.smoother(signal=BasepairCovariance[:,1,1], kernel='boxcar', size=CurveWindow)[0]
-        LocalCovariance[:,1,0]=biosppy.signals.tools.smoother(signal=BasepairCovariance[:,1,0], kernel='boxcar', size=CurveWindow)[0]
-        LocalCovariance[:,0,1]=biosppy.signals.tools.smoother(signal=BasepairCovariance[:,0,1], kernel='boxcar', size=CurveWindow)[0]
+        LocalCovariance[:,0,0]=biosppy.signals.tools.smoother(signal=BasepairCovariance[:,0,0], kernel='boxcar', size=CurveWindow,mirror=False)[0]
+        LocalCovariance[:,1,1]=biosppy.signals.tools.smoother(signal=BasepairCovariance[:,1,1], kernel='boxcar', size=CurveWindow,mirror=False)[0]
+        LocalCovariance[:,1,0]=biosppy.signals.tools.smoother(signal=BasepairCovariance[:,1,0], kernel='boxcar', size=CurveWindow,mirror=False)[0]
+        LocalCovariance[:,0,1]=biosppy.signals.tools.smoother(signal=BasepairCovariance[:,0,1], kernel='boxcar', size=CurveWindow,mirror=False)[0]
         # kernel_size=len(BasepairCovariance[:,0])
         # LocalCovariance[:,0]=signal.convolve(BasepairCovariance[:,0],np.ones(kernel_size)/kernel_size,mode='same')
         # LocalCovariance[:,1]=signal.convolve(BasepairCovariance[:,1],np.ones(kernel_size)/kernel_size,mode='same')
-        w=2
-        s=CurveWindow+1
-        t = (((w - 1)/2)-0.5)/s
-        LocalCovariance=gaussian_filter(BasepairCovariance,sigma=s, truncate=t)
+        # w=2
+        # s=CurveWindow+1
+        # t = (((w - 1)/2)-0.5)/s
+        # LocalCovariance=gaussian_filter(BasepairCovariance,sigma=s, truncate=t)
     
         TanVector, NormVector,CurveVector=(np.zeros([SeqLength,3]) for i in range(3))
         CurveMag, CurvePhase, HalfCurveMag, HalfCurvePhase=(np.zeros([SeqLength]) for i in range(4))
@@ -120,7 +120,7 @@ def PlectonemeCode(Swave):
             CurrentNorm=NormVector[ii]
             
             CosCurve=np.dot(CurrentCurve, CurrentNorm)
-            CurveCross=np.cross(CurrentCurve,CurrentNorm)
+            CurveCross=np.cross(CurrentNorm,CurrentCurve)
             SinCurve=np.dot(CurveCross, CurrentTan)
             CurvePhase[ii]=np.mod(np.arctan2(SinCurve,CosCurve)+Sequence_phase[ii],2*np.pi)
         EnergyOffset=25-CurveWindow*0.334*3/4.06   #adds energy penalty from pulling in DNA ends against a force
@@ -142,25 +142,34 @@ def PlectonemeCode(Swave):
             Z6=np.exp(-E_base/CovRot45[1][1]*(np.sqrt(Cnorm**2/2+1)-Cnorm/np.sqrt(2))**2+EnergyOffset)
             Z7=np.exp(-E_base/CovRot45[1][1]*(np.sqrt(Cnorm**2/2+1)+Cnorm/np.sqrt(2))**2+EnergyOffset)
     
-            Sequence_angle_exp[ii]=Z1+Z2+2*Z3+Z4+Z5+Z6+Z7
+            Sequence_angle_exp[ii]=Sequence_angle_exp[ii]+Z1+Z2+2*Z3+Z4+Z5+Z6+Z7
     
     
     Sequence_angle_energy=-np.log(Sequence_angle_exp)  #Backing out the implied energy landscape from the summed Boltzmann weights
 # what is P???
 # EndEffects=max(0,min(1,(p-BindLength)/AvePlecLength)*min(1,(SeqLength-p-BindLength)/AvePlecLength))  //takes into account the effects of the handles, including limited plectoneme growth near the attachment points
-
+#
     EndEffects=max(0,min(1,(BindLength)/AvePlecLength)*min(1,(SeqLength-BindLength)/AvePlecLength))#  //takes into account the effects of the handles, including limited plectoneme growth near the attachment points
+    A=np.zeros([AvePlecLength,2])
+    for p in np.arange(AvePlecLength):
+        A[p,0]=(p-BindLength)/AvePlecLength
+        A[p,1]=(SeqLength-p-BindLength)/AvePlecLength
+    EndEffects=np.max(min(A[:,0])*min(A[:,1]))
+    
     Sequence_angle_exp=Sequence_angle_exp*EndEffects
     
     Sequence_angle_exp_smth=np.copy(Sequence_angle_exp)
     # np.nan_to_num(Sequence_angle_exp_smth, copy=True, nan=0.0, posinf=None, neginf=None)
     # kernel_size=len(Sequence_angle_exp_smth)
-    for i in tqdm(np.arange(300)):
+    for i in (np.arange(64)):
         # Sequence_angle_exp_smth=savitzky_golay(Sequence_angle_exp_smth,65,2)		#Find covariance matrix over the curvature window
         # Sequence_angle_exp_smth=signal.convolve(Sequence_angle_exp_smth,np.ones(kernel_size)/kernel_size,mode='same')
         # w=2
         # s=300
         # t = (((w - 1)/2)-0.5)/s
         # Sequence_angle_exp_smth=gaussian_filter(Sequence_angle_exp_smth,sigma=s, truncate=t)
-        Sequence_angle_exp_smth=biosppy.signals.tools.smoother(signal=Sequence_angle_exp_smth, kernel='boxcar', size=64)[0]
-    return Sequence_angle_exp_smth, Sequence_angle_exp,CurvePhase
+        Sequence_angle_exp_smth=biosppy.signals.tools.smoother(signal=Sequence_angle_exp_smth, kernel='boxcar', size=300,mirror=False)[0]
+        Sequence_angle_exp_smth=Sequence_angle_exp_smth/np.mean(Sequence_angle_exp_smth)
+        
+    return Sequence_angle_exp_smth, Sequence_angle_exp,CurvePhase,BasepairCovariance
+    
