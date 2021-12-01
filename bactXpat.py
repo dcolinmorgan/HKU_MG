@@ -1,3 +1,4 @@
+
 import matplotlib.pyplot as plt
 import numpy as np
 import os
@@ -154,7 +155,7 @@ def run_vRand(dataset,table,n):
 traces= glob.glob('data/meta/*bedgraph')
 orif=ori='data/OriC_db.bed'
 
-oric_calc(jac, orif) for jac in (traces))
+Parallel(n_jobs=4)(oric_calc(jac, orif) for jac in (traces))
 
 
 primary=pd.read_excel('data/Data Raw - Gut Microbiome Cohort Project Database - 300 Cohort v3.0_280921.xlsx',index_col=0,sheet_name='Primary Data')
