@@ -15,6 +15,6 @@ source activate mypy3
 
 chmod +x run/oric/Plectoneme/run_gordon_plect.py
 
-python run/oric/Plectoneme/run_gordon_plect.py 0 &
+python run/oric/Plectoneme/run_gordon_plect.py 1000 &
 python run/oric/Plectoneme/run_gordon_plect.py 500 &
-python run/oric/Plectoneme/run_gordon_plect.py 1000
+python run/oric/Plectoneme/run_gordon_plect.py 0

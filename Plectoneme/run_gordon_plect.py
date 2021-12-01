@@ -35,7 +35,7 @@ B=np.zeros(5)
 @wrap_non_picklable_objects
 
 # for i,Swave in tqdm(enumerate(high[0].tolist())):
-def calc_plect(Swave):
+def calc_plect(Swave,A):
     # A=np.zeros([int(len(Swave)),6])
     Sequence_angle_exp_smth,Sequence_angle_exp,CurvePhase,BasepairCovariance= PlectonemeCode(Swave)
     A[0]=np.mean(Sequence_angle_exp)
@@ -56,24 +56,10 @@ np.savetxt("data/Plectoneme/high_gene_plect"+str(j)+".txt", A, delimiter="\t")
 B=Parallel(n_jobs=4) (calc_plect(Swave,B) for i,Swave in enumerate(zero[0].tolist()))
 np.savetxt("data/Plectoneme/none_gene_plect"+str(j)+".txt", B, delimiter="\t")
 
-# for i,Swave in tqdm(enumerate(zero[0].tolist())):
-#     Sequence_angle_exp_smth,Sequence_angle_exp,CurvePhase,BasepairCovariance= PlectonemeCode(Swave)
-#     B[i,0]=np.mean(Sequence_angle_exp)
-#     B[i,1]=np.median(Sequence_angle_exp)
-#     B[i,2]=np.percentile(Sequence_angle_exp,95)
-#     # cc=np.histogram(Sequence_angle_exp,bins=10)
-#     # bill[i,0,0:10]=cc[0]
-#     # bill[i,1]=cc[1]
-#     B[i,3]=trapz(Sequence_angle_exp, dx=5)
-#     # B[i,4]=simps(Sequence_angle_exp, dx=5)
-#     B[i,5]=len(Sequence_angle_exp)
 
-# A=pd.read_csv("data/Plectoneme/high_gene_plect0.txt", delimiter="\t",header=None)
-# B=pd.read_csv("data/Plectoneme/none_gene_plect0.txt", delimiter="\t",header=None)
-
-jeff=[#stats.ttest_ind(A[:,0]/A[:,5],B[:,0]/B[:,5]),
-# stats.ttest_ind(A[:,1]/A[:,5],B[:,1]/B[:,5]),
-# stats.ttest_ind(A[:,2]/A[:,5],B[:,2]/B[:,5]),
-stats.ttest_ind(A.iloc[:,3]/A.iloc[:,4],B.iloc[:,3]/B.iloc[:,4],alternative='greater',permutations=10)]
-# stats.ttest_ind(A[:,4]/A[:,5],B[:388,4]/B[:388,5])]
-np.savetxt("data/Plectoneme/ttest_gene_plect"+str(j)+".txt", jeff, delimiter="\t")
+# jeff=[#stats.ttest_ind(A[:,0]/A[:,5],B[:,0]/B[:,5]),
+# # stats.ttest_ind(A[:,1]/A[:,5],B[:,1]/B[:,5]),
+# # stats.ttest_ind(A[:,2]/A[:,5],B[:,2]/B[:,5]),
+# stats.ttest_ind(A[:,3]/A[:,4],B[:,3]/B[:,4],alternative='greater',permutations=10)]
+# # stats.ttest_ind(A[:,4]/A[:,5],B[:388,4]/B[:388,5])]
+# np.savetxt("data/Plectoneme/ttest_gene_plect"+str(j)+".txt", jeff, delimiter="\t")
