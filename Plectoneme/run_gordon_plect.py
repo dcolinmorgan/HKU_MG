@@ -16,11 +16,12 @@ from joblib import Parallel, delayed
 from joblib import wrap_non_picklable_objects
 
 j=int(sys.argv[1])
+h=str(int(sys.argv[2]))
 
 # for j in [0,500,1000]:
 
-high=pd.read_csv('data/Plectoneme/high_gene.fa',sep='\t',header=None)
-zero=pd.read_csv('data/Plectoneme/zero_gene.fa',sep='\t',header=None)
+high=pd.read_csv('data/Plectoneme/'+h+'_high_gene.fa',sep='\t',header=None)
+zero=pd.read_csv('data/Plectoneme/'+h+'_zero_gene.fa',sep='\t',header=None)
 high=high[1::2]
 zero=zero[1::2]
 high['len'] = [len(i) for i in high[0]]
@@ -51,10 +52,10 @@ def calc_plect(Swave,A):
     
 ######-----RUN STUFF-----######
 A=Parallel(n_jobs=4) (calc_plect(Swave,A) for i,Swave in enumerate(high[0].tolist()))
-np.savetxt("data/Plectoneme/high_gene_plect"+str(j)+".txt", A, delimiter="\t")
+np.savetxt("data/Plectoneme/high_gene_plect_"+h+"_"+str(j)+".txt", A, delimiter="\t")
 
 B=Parallel(n_jobs=4) (calc_plect(Swave,B) for i,Swave in enumerate(zero[0].tolist()))
-np.savetxt("data/Plectoneme/none_gene_plect"+str(j)+".txt", B, delimiter="\t")
+np.savetxt("data/Plectoneme/none_gene_plect_"+h+"_"+str(j)+".txt", B, delimiter="\t")
 
 
 # jeff=[#stats.ttest_ind(A[:,0]/A[:,5],B[:,0]/B[:,5]),
