@@ -24,8 +24,8 @@ IN=pd.read_csv('run/oric/Plectoneme/gordon_fasta/'+h+'/'+h+'_'+j+'_gene.fa',sep=
 # zero=pd.read_csv('data/Plectoneme/'+h+'_none_gene.fa',sep='\t',header=None)
 high=IN[1::2]
 sign=IN[0::2]
-# if high[1::2]
-    # 
+
+# sign.item().find('-')
 
 # zero=zero[1::2]
 high['len'] = [len(i) for i in high[0]]
@@ -41,9 +41,11 @@ A=np.zeros(8)
 
 # for i,Swave in tqdm(enumerate(high[0].tolist())):
 def calc_plect(Swave,A,gene,spec,sign):
-    # if (sign.item()).find('+')==0:
-        # Swave=Seq.reverse_complement(Swave)
-    # A=np.zeros(8)
+    if sign.item().find('-'):
+        jeff=Seq(Swave)
+        Swave=str(jeff.reverse_complement())
+        # continue
+    # else:
     Sequence_angle_exp_smth,Sequence_angle_exp= PlectonemeCode(Swave)
     A[0]=np.mean(Sequence_angle_exp)
     A[1]=np.median(Sequence_angle_exp)
@@ -55,15 +57,14 @@ def calc_plect(Swave,A,gene,spec,sign):
     A[7]=np.max(Sequence_angle_exp)
     try:
         with open('data/Plectoneme/'+gene+'_plect_'+spec+'.txt','ab') as f:
-            np.savetxt(f,[Sequence_angle_exp.nonzero()], fmt='%5d', delimiter='\t')
+            np.savetxt(f,[A], fmt='%5d', delimiter='\t')
     except:
         with open('data/Plectoneme/'+gene+'_plect_'+spec+'.txt','ab') as f:
             np.savetxt(f,[np.nan], delimiter='\t')
-    # np.savetxt('data/Plectoneme/'+gene+'_summ_plect_'+str(spec)+'.txt', A, delimiter="\t")
     # return A
     
 ######-----RUN STUFF-----######
-Parallel(n_jobs=24) (calc_plect(Swave,A,j,h,sign[i]) for i,Swave in enumerate(high[0].tolist()))
+Parallel(n_jobs=24) (calc_plect(Swave,A,j,h,sign.iloc[i]) for i,Swave in enumerate(high[0].tolist()))
 
 #####--------PLOT--------######
 traces=glob.glob("data/Plectoneme/*_plect_*.txt")
@@ -102,10 +103,10 @@ C.dropna(inplace=True)
 C=C.reset_index()
 ax=sns.violinplot(data=C,y='TSS>1',x='species',hue='type',cut=0,scale='count')#,kind="violin",cut=0,scale="count", inner="quartile")
 
-add_stat_annotation(ax, data=C, x='species', y='TSS>1',hue='type',
-                    box_pairs=[(("821", "high"), ("821", "none")),
-                                 (("853", "high"), ("853", "none")),
-                                 (("2479767", "high"), ("2479767", "none"))
-                                ],
-                    test='t-test_ind', text_format='star', loc='inside', verbose=2)
+# add_stat_annotation(ax, data=C, x='species', y='TSS>1',hue='type',
+#                     box_pairs=[(("821", "high"), ("821", "none")),
+#                                  (("853", "high"), ("853", "none")),
+#                                  (("2479767", "high"), ("2479767", "none"))
+#                                 ],
+#                     test='t-test_ind', text_format='star', loc='inside', verbose=2)
 plt.legend(loc='upper left', bbox_to_anchor=(1.03, 1))

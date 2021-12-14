@@ -33,10 +33,9 @@ python run/oric/Plectoneme/run_gordon_plect.py zero $bact
 }
 
 export -f bactXplect
-# shuf -n 10 run/oric/Plectoneme/gordon_fasta/bact_list > run/oric/Plectoneme/gordon_fasta/tmp_bact_list
+shuf -n 10 run/oric/Plectoneme/gordon_fasta/bact_list > run/oric/Plectoneme/gordon_fasta/tmp_bact_list
 
-# parallel -a run/oric/Plectoneme/gordon_fasta/tmp_bact_list bactXplect 
+parallel -a run/oric/Plectoneme/gordon_fasta/tmp_bact_list bactXplect 
 
-parallel bactXplect  ::: 227318 2479767 39779 297314 2030927 1520817 214856 2049048
-
-# find . -cmin -20 |rm -rf
+# parallel bactXplect  ::: 853 821 2479767 #
+# parallel bactXplect  ::: 2479767 39779 297314 2030927 1520817 214856 2049048
