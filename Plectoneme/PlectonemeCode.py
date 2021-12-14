@@ -86,14 +86,7 @@ def PlectonemeCode(Swave):
         LocalCovariance[:,1,1]=biosppy.signals.tools.smoother(signal=BasepairCovariance[:,1,1], kernel='boxcar', size=CurveWindow,mirror=False)[0]
         LocalCovariance[:,1,0]=biosppy.signals.tools.smoother(signal=BasepairCovariance[:,1,0], kernel='boxcar', size=CurveWindow,mirror=False)[0]
         LocalCovariance[:,0,1]=biosppy.signals.tools.smoother(signal=BasepairCovariance[:,0,1], kernel='boxcar', size=CurveWindow,mirror=False)[0]
-        # kernel_size=len(BasepairCovariance[:,0])
-        # LocalCovariance[:,0]=signal.convolve(BasepairCovariance[:,0],np.ones(kernel_size)/kernel_size,mode='same')
-        # LocalCovariance[:,1]=signal.convolve(BasepairCovariance[:,1],np.ones(kernel_size)/kernel_size,mode='same')
-        # w=2
-        # s=CurveWindow+1
-        # t = (((w - 1)/2)-0.5)/s
-        # LocalCovariance=gaussian_filter(BasepairCovariance,sigma=s, truncate=t)
-    
+
         TanVector, NormVector,CurveVector=(np.zeros([SeqLength,3]) for i in range(3))
         CurveMag, CurvePhase, HalfCurveMag, HalfCurvePhase=(np.zeros([SeqLength]) for i in range(4))
         NormVector=DNApathMajorGroove[:,0:3]-DNApath[:,0:3]  #identifies the normal vector alligned with the major groove
@@ -171,5 +164,5 @@ def PlectonemeCode(Swave):
         Sequence_angle_exp_smth=biosppy.signals.tools.smoother(signal=Sequence_angle_exp_smth, kernel='boxcar', size=300,mirror=False)[0]
         Sequence_angle_exp_smth=Sequence_angle_exp_smth/np.mean(Sequence_angle_exp_smth)
         
-    return Sequence_angle_exp_smth, Sequence_angle_exp,CurvePhase,BasepairCovariance
+    return Sequence_angle_exp_smth, Sequence_angle_exp
     
